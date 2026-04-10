@@ -100,14 +100,14 @@ export default function Home() {
       {/* Featured Services */}
       <section className="featured">
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+          <div className="featured-header">
             <div>
               <h2 className="section-title">Featured Services</h2>
               <p className="section-subtitle" style={{ marginBottom: 0 }}>
                 Top-rated professionals handpicked for you
               </p>
             </div>
-            <Link to="/services" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.88rem' }}>
+            <Link to="/services" className="featured-view-all">
               View All <FiArrowRight />
             </Link>
           </div>
@@ -120,41 +120,39 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section style={{ padding: '80px 0', background: 'var(--bg-secondary)' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <h2 className="section-title">How It Works</h2>
-          <p className="section-subtitle">Book a service in 3 simple steps</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginTop: '16px' }}>
+      <section className="how-it-works">
+        <div className="container">
+          <h2 className="section-title" style={{ textAlign: 'center' }}>How It Works</h2>
+          <p className="section-subtitle" style={{ textAlign: 'center' }}>Book a service in 3 simple steps</p>
+          <div className="how-it-works-grid">
             {[
               { step: '01', icon: '🔍', title: 'Search', desc: 'Find the service you need from 100+ categories in your area' },
               { step: '02', icon: '📋', title: 'Compare & Book', desc: 'Compare ratings, reviews, prices & book your preferred professional' },
               { step: '03', icon: '⭐', title: 'Rate & Review', desc: 'After service completion, share your experience to help others' },
             ].map((item) => (
-              <div
-                key={item.step}
-                className="animate-fade-in"
-                style={{
-                  padding: '32px 24px',
-                  borderRadius: '12px',
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  transition: 'transform 0.25s, box-shadow 0.25s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>{item.icon}</div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.5px' }}>STEP {item.step}</div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px', letterSpacing: '-0.01em' }}>{item.title}</h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>{item.desc}</p>
+              <div key={item.step} className="how-it-works-card animate-fade-in">
+                <div className="how-it-works-emoji">{item.icon}</div>
+                <div className="how-it-works-step">STEP {item.step}</div>
+                <h3 className="how-it-works-title">{item.title}</h3>
+                <p className="how-it-works-desc">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Banner */}
+      <section className="home-cta">
+        <div className="container">
+          <div className="home-cta-inner">
+            <h2 className="home-cta-title">Ready to get started?</h2>
+            <p className="home-cta-subtitle">
+              Join thousands of happy customers who trust SevaHub for their daily needs.
+            </p>
+            <div className="home-cta-actions">
+              <Link to="/services" className="home-cta-btn primary">Explore Services</Link>
+              <Link to="/register" className="home-cta-btn outline">Create Account</Link>
+            </div>
           </div>
         </div>
       </section>

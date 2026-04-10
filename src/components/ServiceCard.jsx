@@ -30,7 +30,7 @@ export default function ServiceCard({ service }) {
         <p className="service-card-provider">by {service.provider}</p>
         <div className="service-card-meta">
           <div className="service-card-rating">
-            <FiStar fill="#F39C12" stroke="none" />
+            <FiStar fill="#F59E0B" stroke="none" />
             {service.rating}
             <span>({service.reviewCount})</span>
           </div>
