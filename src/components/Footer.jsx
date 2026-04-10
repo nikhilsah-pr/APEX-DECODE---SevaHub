@@ -30,11 +30,11 @@ export default function Footer() {
           <div>
             <h4 className="footer-column-title">Company</h4>
             <ul className="footer-links">
-              <li><a href="#about">About Us</a></li>
+              <li><Link to="/about">About Us</Link></li>
+              <li><Link to="/contact">Contact Us</Link></li>
+              <li><Link to="/merchant">Partner With Us</Link></li>
               <li><a href="#careers">Careers</a></li>
               <li><a href="#blog">Blog</a></li>
-              <li><a href="#contact">Contact</a></li>
-              <li><a href="#partner">Partner With Us</a></li>
             </ul>
           </div>
 
@@ -52,10 +52,10 @@ export default function Footer() {
         <div className="footer-bottom">
           <span>© 2026 SevaHub. Made with ❤️ in India</span>
           <div className="footer-social">
-            <a href="#instagram" aria-label="Instagram"><FiInstagram /></a>
-            <a href="#twitter" aria-label="Twitter"><FiTwitter /></a>
-            <a href="#facebook" aria-label="Facebook"><FiFacebook /></a>
-            <a href="#linkedin" aria-label="LinkedIn"><FiLinkedin /></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FiInstagram /></a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FiTwitter /></a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FiFacebook /></a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FiLinkedin /></a>
           </div>
         </div>
       </div>

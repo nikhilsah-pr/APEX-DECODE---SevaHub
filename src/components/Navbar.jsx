@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser } from 'react-icons/fi';
 
 export default function Navbar({ user, setUser }) {
   const [scrolled, setScrolled] = useState(false);
@@ -24,6 +24,8 @@ export default function Navbar({ user, setUser }) {
     navigate('/');
   };
 
+  const isActive = (path) => location.pathname === path;
+
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="navbar-inner">
@@ -41,32 +43,37 @@ export default function Navbar({ user, setUser }) {
         </button>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-          <Link
-            to="/"
-            className={`navbar-link ${location.pathname === '/' ? 'active' : ''}`}
-          >
+          <Link to="/" className={`navbar-link ${isActive('/') ? 'active' : ''}`}>
             Home
           </Link>
-          <Link
-            to="/services"
-            className={`navbar-link ${location.pathname === '/services' ? 'active' : ''}`}
-          >
+          <Link to="/services" className={`navbar-link ${isActive('/services') ? 'active' : ''}`}>
             Services
           </Link>
+          <Link to="/about" className={`navbar-link ${isActive('/about') ? 'active' : ''}`}>
+            About Us
+          </Link>
+          <Link to="/contact" className={`navbar-link ${isActive('/contact') ? 'active' : ''}`}>
+            Contact
+          </Link>
+          <Link to="/merchant" className={`navbar-link ${isActive('/merchant') ? 'active' : ''}`}>
+            Merchant
+          </Link>
+
           {user?.role === 'admin' && (
-            <Link
-              to="/admin"
-              className={`navbar-link ${location.pathname === '/admin' ? 'active' : ''}`}
-            >
+            <Link to="/admin" className={`navbar-link ${isActive('/admin') ? 'active' : ''}`}>
               Admin
             </Link>
           )}
 
           {user ? (
             <>
-              <span className="navbar-link" style={{ color: '#555', cursor: 'default' }}>
-                Hi, {user.name}
-              </span>
+              <Link
+                to="/dashboard"
+                className={`navbar-link navbar-user-link ${isActive('/dashboard') ? 'active' : ''}`}
+              >
+                <FiUser size={15} />
+                <span>{user.name}</span>
+              </Link>
               <button className="navbar-btn navbar-btn-outline" onClick={handleLogout}>
                 Logout
               </button>

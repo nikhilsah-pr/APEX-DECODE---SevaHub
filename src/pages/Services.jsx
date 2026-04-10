@@ -1,14 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
+import LocationSearch from '../components/LocationSearch';
 import Filters from '../components/Filters';
 import ServiceCard from '../components/ServiceCard';
 import Footer from '../components/Footer';
-import { services } from '../data/services';
+import { services, defaultLocations } from '../data/services';
 
 export default function Services() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [selectedLocation, setSelectedLocation] = useState('');
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
     rating: '',
@@ -16,6 +18,14 @@ export default function Services() {
     distance: '',
   });
   const [loading, setLoading] = useState(true);
+
+  // Combine default locations with any merchant-added locations
+  const allLocations = useMemo(() => {
+    const merchantServices = JSON.parse(localStorage.getItem('sevaMerchantServices') || '[]');
+    const merchantLocations = merchantServices.map((s) => s.location).filter(Boolean);
+    const combined = [...new Set([...defaultLocations, ...merchantLocations])];
+    return combined.sort();
+  }, []);
 
   useEffect(() => {
     // Simulate loading
@@ -42,6 +52,11 @@ export default function Services() {
           service.provider.toLowerCase().includes(q);
         if (!matches) return false;
       }
+      // Location filter
+      if (selectedLocation && !selectedLocation.includes('Auto-detected')) {
+        const loc = selectedLocation.toLowerCase();
+        if (!service.address.toLowerCase().includes(loc)) return false;
+      }
       // Category
       if (filters.category && service.category !== filters.category) return false;
       // Rating
@@ -53,7 +68,7 @@ export default function Services() {
 
       return true;
     });
-  }, [searchQuery, filters]);
+  }, [searchQuery, selectedLocation, filters]);
 
   return (
     <>
@@ -63,12 +78,26 @@ export default function Services() {
           {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} found
           {filters.category ? ` in ${filters.category}` : ''}
           {searchQuery ? ` for "${searchQuery}"` : ''}
+          {selectedLocation ? ` near ${selectedLocation}` : ''}
         </p>
 
-        <SearchBar
-          onSearch={(q) => setSearchQuery(q)}
-          placeholder="Search services, categories, providers..."
-        />
+        {/* Search & Location Row */}
+        <div className="services-search-row">
+          <div className="services-search-col">
+            <SearchBar
+              onSearch={(q) => setSearchQuery(q)}
+              placeholder="Search services, categories, providers..."
+            />
+          </div>
+          <div className="services-location-col">
+            <LocationSearch
+              locations={allLocations}
+              selectedLocation={selectedLocation}
+              onSelect={setSelectedLocation}
+              placeholder="Filter by location..."
+            />
+          </div>
+        </div>
 
         <Filters filters={filters} setFilters={setFilters} />
 
@@ -82,17 +111,18 @@ export default function Services() {
             <div className="empty-state-icon">🔍</div>
             <h3 className="empty-state-title">No services found</h3>
             <p className="empty-state-message">
-              Try adjusting your search or filters to find what you're looking for.
+              Try adjusting your search, location, or filters to find what you're looking for.
             </p>
             <button
               className="service-card-btn"
               style={{ marginTop: '20px' }}
               onClick={() => {
                 setSearchQuery('');
+                setSelectedLocation('');
                 setFilters({ category: '', rating: '', price: '', distance: '' });
               }}
             >
-              Clear Filters
+              Clear All Filters
             </button>
           </div>
         ) : (

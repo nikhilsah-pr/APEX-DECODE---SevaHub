@@ -10,6 +10,10 @@ import ServiceDetails from './pages/ServiceDetails';
 import Booking from './pages/Booking';
 import Success from './pages/Success';
 import Admin from './pages/Admin';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Merchant from './pages/Merchant';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -74,6 +78,13 @@ function AppContent({ user, setUser, bookings, onBook }) {
         />
         <Route path="/success" element={<Success />} />
         <Route path="/admin" element={<Admin user={user} />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/merchant" element={<Merchant user={user} />} />
+        <Route
+          path="/dashboard"
+          element={<Dashboard user={user} bookings={bookings} />}
+        />
       </Routes>
     </>
   );
