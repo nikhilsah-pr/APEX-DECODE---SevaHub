@@ -1,7 +1,8 @@
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
+require('dotenv').config();
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -9,168 +10,155 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const dataPath = path.join(__dirname, 'data.json');
+// ✅ Root
+app.get('/', (req, res) => {
+  res.send('Backend working ✅');
+});
 
-// Helper function to read data
-const readData = () => {
+// ✅ MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected ✅"))
+  .catch(err => console.log("DB Error:", err));
+
+
+// ================= MODEL ================= //
+
+const User = require('./models/User');
+const MerchantProfile = require('./models/MerchantProfile');
+
+
+// ================= REGISTER ================= //
+
+app.post('/api/register', async (req, res) => {
+  console.log("REGISTER HIT:", req.body);
+
   try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading data:', error);
-    return { services: [], bookings: [], locations: [], categories: [] };
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = new User({ name, email, password });
+    await user.save();
+
+    res.json({
+      message: "User saved in MongoDB ✅",
+      user
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
+
+
+// ================= LOGIN ================= //
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email, password });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    res.json({ message: "Login successful", user });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// ================= SERVER ================= //
+
+// Trust Score Calculator
+const calculateTrustScore = (profile) => {
+  let score = 0;
+  // 1. Phone Verified -> +20
+  if (profile.phoneVerified) score += 20;
+  
+  // 2. Location Verified -> +20
+  if (profile.locationVerified) score += 20;
+
+  // 3. Profile Completion -> +20
+  let completionItems = 0;
+  if (profile.name) completionItems++;
+  if (profile.serviceCategory) completionItems++;
+  if (profile.experienceYears) completionItems++;
+  if (profile.idProofUrl || profile.businessProofUrl || profile.profilePhotoUrl) completionItems += 2;
+  
+  if (completionItems >= 4) score += 20;
+  else if (completionItems >= 2) score += 10;
+
+  // 4. Reviews / Ratings -> +20
+  if (profile.avgRating >= 4) score += 20;
+  else if (profile.avgRating > 0) score += 10;
+
+  // 5. Activity -> +20
+  if (profile.activityCount >= 5) score += 20;
+  else if (profile.activityCount >= 1) score += 10;
+
+  score = Math.min(score, 100);
+
+  let status = 'Not Verified';
+  if (score >= 80) status = 'Verified';
+  else if (score >= 50) status = 'Semi-Trusted';
+
+  return { trustScore: score, verificationStatus: status };
 };
 
-// Helper function to write data
-const writeData = (data) => {
+// ================= MERCHANT PROFILE ================= //
+
+app.get('/api/merchant-profile/:email', async (req, res) => {
   try {
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8');
-  } catch (error) {
-    console.error('Error writing data:', error);
-  }
-};
-
-// --- ROUTES ---
-
-// 1. Get Categories
-app.get('/api/categories', (req, res) => {
-  const data = readData();
-  res.json(data.categories);
-});
-
-// 2. Get Locations
-app.get('/api/locations', (req, res) => {
-  const data = readData();
-  res.json(data.locations);
-});
-
-app.post('/api/locations', (req, res) => {
-  const { location } = req.body;
-  const data = readData();
-  if (location && !data.locations.includes(location)) {
-    data.locations.push(location);
-    writeData(data);
-    res.status(201).json({ message: 'Location added successfully', location });
-  } else {
-    res.status(400).json({ message: 'Location already exists or invalid' });
+    const { email } = req.params;
+    let profile = await MerchantProfile.findOne({ email });
+    if (!profile) {
+      // Return empty profile with default scores
+      return res.json({ profile: null });
+    }
+    res.json({ profile });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 3. Get Services
-app.get('/api/services', (req, res) => {
-  const { category, search, location } = req.query;
-  const data = readData();
-  
-  let result = data.services;
-  
-  if (category) {
-    result = result.filter(s => s.category.toLowerCase() === category.toLowerCase());
-  }
-  
-  if (search) {
-    const searchLower = search.toLowerCase();
-    result = result.filter(s => 
-      s.name.toLowerCase().includes(searchLower) || 
-      s.category.toLowerCase().includes(searchLower) ||
-      s.description.toLowerCase().includes(searchLower)
-    );
-  }
+app.put('/api/merchant-profile', async (req, res) => {
+  try {
+    const { email, updates } = req.body;
+    if (!email) return res.status(400).json({ message: "Email required" });
 
-  if (location) {
-    const locLower = location.toLowerCase();
-    result = result.filter(s => s.address.toLowerCase().includes(locLower));
-  }
-  
-  res.json(result);
-});
+    let profile = await MerchantProfile.findOne({ email });
+    
+    if (!profile) {
+      profile = new MerchantProfile({ email, ...updates });
+    } else {
+      Object.assign(profile, updates);
+    }
 
-// 4. Get Single Service
-app.get('/api/services/:id', (req, res) => {
-  const data = readData();
-  const service = data.services.find(s => s.id === parseInt(req.params.id));
-  if (service) {
-    res.json(service);
-  } else {
-    res.status(404).json({ message: 'Service not found' });
+    // Recalculate trust score
+    const { trustScore, verificationStatus } = calculateTrustScore(profile);
+    profile.trustScore = trustScore;
+    profile.verificationStatus = verificationStatus;
+
+    await profile.save();
+    
+    res.json({ message: "Profile updated", profile });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 5. Add Service (Merchant feature)
-app.post('/api/services', (req, res) => {
-  const data = readData();
-  const newService = req.body;
-  
-  const id = data.services.length > 0 ? Math.max(...data.services.map(s => s.id)) + 1 : 1;
-  
-  const serviceToAdd = {
-    ...newService,
-    id,
-    rating: newService.rating || 0,
-    reviewCount: newService.reviewCount || 0,
-    reviews: newService.reviews || [],
-    verified: false,
-    distance: newService.distance || (Math.random() * 5 + 0.5).toFixed(1)
-  };
-  
-  data.services.push(serviceToAdd);
-  
-  // also extract location/address logic optionally to locations array
-  let locationPart = serviceToAdd.address.split(',')[0].trim();
-  if (!data.locations.includes(locationPart)) {
-    data.locations.push(locationPart);
-  }
-
-  writeData(data);
-  res.status(201).json(serviceToAdd);
-});
-
-// 6. Get Bookings
-app.get('/api/bookings', (req, res) => {
-  const data = readData();
-  // Filter by user ID if authenticated. For now, returning all or filtering by query
-  const { userId } = req.query;
-  let result = data.bookings;
-  if(userId) {
-     result = result.filter(b => b.userId === userId);
-  }
-  res.json(result);
-});
-
-// 7. Create Booking
-app.post('/api/bookings', (req, res) => {
-  const data = readData();
-  const newBooking = req.body;
-  
-  const id = 'BKG' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000);
-  
-  const bookingToAdd = {
-    ...newBooking,
-    id,
-    status: 'pending',
-    dateAdded: new Date().toISOString()
-  };
-  
-  data.bookings.push(bookingToAdd);
-  writeData(data);
-  
-  res.status(201).json(bookingToAdd);
-});
-
-// 8. Update Booking Status
-app.patch('/api/bookings/:id', (req, res) => {
-  const data = readData();
-  const { status } = req.body;
-  const bookingIndex = data.bookings.findIndex(b => b.id === req.params.id);
-  
-  if (bookingIndex !== -1) {
-    data.bookings[bookingIndex].status = status;
-    writeData(data);
-    res.json(data.bookings[bookingIndex]);
-  } else {
-    res.status(404).json({ message: 'Booking not found' });
-  }
-});
+// ================= SERVER ================= //
 
 app.listen(PORT, () => {
   console.log(`Backend Server running on port ${PORT}`);

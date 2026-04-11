@@ -3,6 +3,7 @@ import { FiPlus, FiEdit3, FiTrash2, FiPackage } from 'react-icons/fi';
 import { useToast } from '../components/Toast';
 import { getCategories, addService } from '../api';
 import Footer from '../components/Footer';
+import MerchantVerification from '../components/MerchantVerification';
 
 export default function Merchant({ user }) {
   const toast = useToast();
@@ -119,6 +120,8 @@ export default function Merchant({ user }) {
     <>
       <div className="merchant-page">
         <div className="container">
+          <MerchantVerification user={user} />
+          
           {/* Header */}
           <div className="merchant-header animate-fade-in">
             <div>

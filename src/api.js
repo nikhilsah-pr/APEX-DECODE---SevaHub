@@ -78,3 +78,28 @@ export const createBooking = async (booking) => {
     throw error;
   }
 };
+
+export const getMerchantProfile = async (email) => {
+  try {
+    const res = await fetch(`${API_URL}/merchant-profile/${email}`);
+    if (!res.ok) throw new Error('Failed to fetch profile');
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching merchant profile:', error);
+    return null;
+  }
+};
+
+export const updateMerchantProfile = async (email, updates) => {
+  try {
+    const res = await fetch(`${API_URL}/merchant-profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, updates }),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error updating merchant profile:', error);
+    throw error;
+  }
+};
