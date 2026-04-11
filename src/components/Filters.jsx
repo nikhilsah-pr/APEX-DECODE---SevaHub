@@ -1,6 +1,13 @@
-import { categories } from '../data/services';
+import { useState, useEffect } from 'react';
+import { getCategories } from '../api';
 
 export default function Filters({ filters, setFilters }) {
+  const [categories, setCategories] = useState([]);
+  
+  useEffect(() => {
+    getCategories().then(setCategories);
+  }, []);
+
   const handleCategoryClick = (cat) => {
     setFilters((prev) => ({
       ...prev,

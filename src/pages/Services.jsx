@@ -5,7 +5,7 @@ import LocationSearch from '../components/LocationSearch';
 import Filters from '../components/Filters';
 import ServiceCard from '../components/ServiceCard';
 import Footer from '../components/Footer';
-import { services, defaultLocations } from '../data/services';
+import { getServices, getLocations } from '../api';
 
 export default function Services() {
   const [searchParams] = useSearchParams();
@@ -17,21 +17,17 @@ export default function Services() {
     price: '',
     distance: '',
   });
+  const [services, setServices] = useState([]);
+  const [allLocations, setAllLocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Combine default locations with any merchant-added locations
-  const allLocations = useMemo(() => {
-    const merchantServices = JSON.parse(localStorage.getItem('sevaMerchantServices') || '[]');
-    const merchantLocations = merchantServices.map((s) => s.location).filter(Boolean);
-    const combined = [...new Set([...defaultLocations, ...merchantLocations])];
-    return combined.sort();
-  }, []);
-
   useEffect(() => {
-    // Simulate loading
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
+    Promise.all([getServices(), getLocations()]).then(([srv, locs]) => {
+      setServices(srv);
+      setAllLocations(locs.sort());
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {

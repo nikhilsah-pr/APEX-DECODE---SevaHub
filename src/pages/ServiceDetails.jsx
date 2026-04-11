@@ -4,7 +4,7 @@ import { FiStar, FiMapPin, FiPhone, FiCalendar, FiChevronRight, FiClock } from '
 import { HiOutlineBadgeCheck } from 'react-icons/hi';
 import Footer from '../components/Footer';
 import { useToast } from '../components/Toast';
-import { services } from '../data/services';
+import { getServiceById } from '../api';
 
 export default function ServiceDetails({ user, bookings }) {
   const { id } = useParams();
@@ -20,17 +20,15 @@ export default function ServiceDetails({ user, bookings }) {
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => {
-      const found = services.find((s) => s.id === parseInt(id));
+    getServiceById(id).then((found) => {
       setService(found);
       if (found) {
-        // Load reviews from localStorage or default
+        // Load reviews from localStorage or backend
         const storedReviews = JSON.parse(localStorage.getItem(`reviews_${id}`) || 'null');
         setReviews(storedReviews || found.reviews);
       }
       setLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
+    });
   }, [id]);
 
   const handleReviewSubmit = (e) => {

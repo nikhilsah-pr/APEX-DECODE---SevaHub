@@ -1,13 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiArrowRight } from 'react-icons/fi';
 import ServiceCard from '../components/ServiceCard';
 import Footer from '../components/Footer';
-import { categories, services } from '../data/services';
+import { getCategories, getServices } from '../api';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [featuredServices, setFeaturedServices] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getCategories().then(setCategories);
+    getServices().then(res => setFeaturedServices(res.filter(s => s.verified).slice(0, 6)));
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -17,8 +24,6 @@ export default function Home() {
       navigate('/services');
     }
   };
-
-  const featuredServices = services.filter((s) => s.verified).slice(0, 6);
 
   return (
     <>

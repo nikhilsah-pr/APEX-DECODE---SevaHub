@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../components/Toast';
-import { services } from '../data/services';
+import { getServiceById, createBooking } from '../api';
 
 export default function Booking({ user, onBook }) {
   const { id } = useParams();
@@ -21,12 +21,10 @@ export default function Booking({ user, onBook }) {
       return;
     }
     setLoading(true);
-    const timer = setTimeout(() => {
-      const found = services.find((s) => s.id === parseInt(id));
+    getServiceById(id).then((found) => {
       setService(found);
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
+    });
   }, [id, user, navigate]);
 
   // Set minimum date to today
@@ -43,23 +41,26 @@ export default function Booking({ user, onBook }) {
     }
 
     setSubmitting(true);
-    setTimeout(() => {
-      const booking = {
-        id: Date.now(),
-        serviceId: service.id,
-        serviceName: service.name,
-        provider: service.provider,
-        price: service.price,
-        date,
-        slot: selectedSlot,
-        image: service.images[0],
-        bookedAt: new Date().toISOString(),
-      };
+    const booking = {
+      serviceId: service.id,
+      userId: user.email,
+      serviceName: service.name,
+      provider: service.provider,
+      price: service.price,
+      date,
+      slot: selectedSlot,
+      image: service.images[0],
+      bookedAt: new Date().toISOString(),
+    };
 
-      onBook(booking);
+    createBooking(booking).then((savedBooking) => {
+      if (onBook) onBook(savedBooking);
       setSubmitting(false);
-      navigate('/success', { state: { booking } });
-    }, 1200);
+      navigate('/success', { state: { booking: savedBooking } });
+    }).catch((err) => {
+      toast('Failed to create booking', 'error');
+      setSubmitting(false);
+    });
   };
 
   if (loading) {

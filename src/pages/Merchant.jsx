@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit3, FiTrash2, FiPackage } from 'react-icons/fi';
 import { useToast } from '../components/Toast';
-import { categories } from '../data/services';
+import { getCategories, addService } from '../api';
 import Footer from '../components/Footer';
 
 export default function Merchant({ user }) {
@@ -22,6 +22,12 @@ export default function Merchant({ user }) {
   const [errors, setErrors] = useState({});
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    getCategories().then(setCategories);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('sevaMerchantServices', JSON.stringify(myServices));
@@ -61,20 +67,27 @@ export default function Merchant({ user }) {
       );
       toast('Service updated successfully!', 'success');
       setEditing(null);
+      setForm(emptyForm);
+      setShowForm(false);
+      setErrors({});
     } else {
       const newService = {
-        id: Date.now(),
         ...form,
         price: Number(form.price),
-        status: 'pending',
-        createdAt: new Date().toISOString(),
+        address: form.location, // align with backend property
+        provider: user ? user.name : 'Unknown Merchant',
       };
-      setMyServices((prev) => [newService, ...prev]);
-      toast('Service added! It will be visible after admin approval.', 'success');
+      
+      addService(newService).then((savedService) => {
+        setMyServices((prev) => [savedService, ...prev]);
+        toast('Service added to the backend successfully!', 'success');
+        setForm(emptyForm);
+        setShowForm(false);
+        setErrors({});
+      }).catch(e => {
+        toast('Failed to add service', 'error');
+      });
     }
-    setForm(emptyForm);
-    setShowForm(false);
-    setErrors({});
   };
 
   const handleEdit = (service) => {

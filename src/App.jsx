@@ -14,6 +14,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Merchant from './pages/Merchant';
 import Dashboard from './pages/Dashboard';
+import { getBookings } from './api';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -21,16 +22,15 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem('sevaBookings');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
-    if (bookings.length) {
-      localStorage.setItem('sevaBookings', JSON.stringify(bookings));
+    if (user && user.email) {
+      getBookings(user.email).then(data => setBookings(data));
+    } else {
+      setBookings([]);
     }
-  }, [bookings]);
+  }, [user]);
 
   const handleBook = (booking) => {
     setBookings((prev) => [...prev, booking]);
